@@ -308,7 +308,7 @@ AWS에서 제공하는 EC2 GPU 인스턴스인 Nvidia L40s 1장 서버 기준의
 - `--max-model-len 12K`
   - 하나의 요청이 사용할 수 있는 최대 토큰(Input + Output) 길이(context length)입니다.
   - EVA는 여러 장의 이미지를 통해 상황을 판단하는 경우도 있어 12K 정도를 할당했습니다.
-  - 값을 작게 설정할 경우 vLLM 서버에서 에러를 발생시키고 크게 설정할 경우 최소 KV Cache 사용량이 증가합니다.
+  - 값을 작게 설정할 경우 긴 요청에 대해 vLLM 서버에서 에러를 발생시키고 크게 설정할 경우 최소 KV Cache 사용량이 증가합니다.
 - `--max-num-batched-tokens 4K`
   - 한 iteration에서 동시에 처리할 수 있는 토큰 총량의 상한입니다.
     - Continuous Batching + Chunked Prefill 스케줄러가 매 스텝마다 쓸 수 있는 “**토큰 예산(token budget)**”으로 생각할 수 있습니다.
