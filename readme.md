@@ -123,7 +123,7 @@ LLM은 생성한 output를 다시 input으로 활용해서 다음 output을 순�
 토큰 이라는 최소 단위를 기준으로 순서대로 답변을 생성합니다.
 
 ![Autoregressive Model](./images/3.1.autoregressive_model.png)
-*<p style="text-align:center;">Figure 1. Autoregressive 모델 추론 방식</p>*
+*<center>Figure 1. Autoregressive 모델 추론 방식</center>*
 
 매 토큰을 생성할 때 마다 이전 모든 토큰에 대한 정보를 필요로 합니다.
 예를 들어 마지막 토큰인 **assistant**를 생성하기 위해서는 이미 계산한 앞의 4개 토큰을 다시 계산해야합니다.
@@ -154,14 +154,14 @@ KV Cache가 GPU 메모리를 폭발적으로 잡아먹습니다.
 실제 서비스 환경에서 유저마다 요청하는 시퀀스의 길이는 제 각 각이기 때문에 최적의 값을 미리 설정해 두기는 어렵습니다.
 
 ![Fixed Size Batch](./images/3.2.fixed_size_batch.png)
-*<p style="text-align:center;">Figure 2. 비효율적인 GPU 메모리 사용</p>*
+*<center>Figure 2. 비효율적인 GPU 메모리 사용</center>*
 
 여기서 vLLM이 도입한 핵심 아이디어가 **Paged Attention**[^5]입니다.
 KV Cache를 “페이지(page)” 단위로 잘게 쪼개어 관리하는 방식입니다.
 하나의 긴 시퀀스를 여러 개의 page로 나누어 저장해 두고, 시퀀스가 끝나거나 더 이상 필요 없는 부분이 생기면 **그 page는 다른 시퀀스에 할당하여 재사용**합니다.
 
 ![Paged Memory](./images/3.2.paged_memory.png)
-*<p style="text-align:center;">Figure 3. Paged 메모리</p>*
+*<center>Figure 3. Paged 메모리</center>*
 
 하나의 시퀀스를 위해 메모리를 통째로 잡아놓지 않고, 필요없는 메모리 사용을 최소화 하기에 낭비가 거의 없습니다.
 결과적으로, **동일한 GPU로 더 많은 요청을 동시에 처리**할 수 있고, 시퀀스 길이가 제각각이어도 필요한 만큼의 page만을 할당하여 KV Cache를 효율적으로 운용할 수 있게 됩니다.
@@ -171,12 +171,12 @@ KV Cache를 “페이지(page)” 단위로 잘게 쪼개어 관리하는 방식
 Paged Attention이 메모리를 효율적으로 쓰는 기술이라면, **Continuous Batching**[^6][^7]은 GPU 연산 자체를 최대한 활용하기 위한 기술입니다. 일반적으로 배치 추론은 일정 시간동안 들어온 요청을 한 번에 배치로 만들고, 배치 전체를 끝까지 추론하고 나서 다음 배치를 처리합니다. 하지만 위에서 말했 듯 LLM 요청은 길이가 정해져 있지 않기 떄문에 배치 안에서 가장 오래 걸리는 추론이 끝날 동안 이미 연산이 완료된 요청은 대기열에서 기다립니다. 배치 내에서 먼저 끝난 요청도, 배치에 묶여서 마지막 요청이 끝날 때까지 기다려야만 합니다. 쉽게 말해 GPU가 연산할 수 있는데 놀고 있는 상황입니다.
 
 ![Static Batching](./images/3.3.static_batching.png)
-*<p style="text-align:center;">Figure 4. Static Batching</p>*
+*<center>Figure 4. Static Batching</center>*
 
 **Continuous Batching(Iteration-level Scheduling)**[^6][^7]은 이걸 토큰 생성 “한 번(iteration)” 단위로 더 잘게 쪼개서 생각합니다. 한 번의 iteration이 끝날 떄 마다 이미 처리가 끝난 요청은 배치에서 바로 제거하고 새로 들어온 요청을 바로 현재 배치에 편성합니다. 즉 배치를 한 번 만들고 끝까지 고정하는 것이 아닌 매 iteration마다 업데이트하는 연속적인 구조로 변경하는거죠.
 
 ![Continuous Batching](./images/3.3.continusous_batching.png)
-*<p style="text-align:center;">Figure 5. Continuous Batching</p>*
+*<center>Figure 5. Continuous Batching</center>*
 
 GPU가 연산하지 않고 대기하는 시간을 최소화 하고 다음 요청을 바로 바로 처리하기 때문에 같은 시간에 더 많은 유저의 요청을 처리할 수 있게 됩니다. 특히 짧은 요청이 섞인 서비스 환경에서 사용자가 체감하는 시간이 크게 줄어듭니다.
 Paged Attention을 통해 GPU 메모리를 효율적으로 사용하고, Continuous Batching을 통해 GPU를 최대한 활용한 상태로 토큰을 생성하게 함으로써, 같은 GPU 메모리로 더 많은 요청을 동시에 처리하면서도 답변 시간도 줄이는 두 마리 토끼를 다 잡는 거죠.
@@ -194,7 +194,7 @@ LLM 요청은 크게 두 단계로 나눌 수 있습니다.
 그동안 다른 요청의 decode는 처리되지 못하고 긴 프롬프트에 대한 처리가 끝날 때 까지 기다려야 합니다.
 
 ![Chunked Prefill](./images/3.4.chunked_prefill.png)
-*<p style="text-align:center;">Figure 6. Chunked Prefill</p>*
+*<center>Figure 6. Chunked Prefill</center>*
 
 Chunked Prefill의 핵심 아이디어는 간단합니다.
 
@@ -220,7 +220,7 @@ Paged Attention이 “KV Cache를 어떻게 관리할 것인가(메모리 구조
 GPU 아키텍쳐를 알아야 하기에 필요한 부분만 간단하게 알아 볼 예정입니다. 실제 GPU 동작방식과 정확히 일치하지는 않습니다.
 
 ![Attention on GPU](./images/3.5.attention_on_gpu.png)
-*<p style="text-align:center;">Figure 7. Compute on GPU</p>*
+*<center>Figure 7. Compute on GPU</center>*
 
 Nvidia GPU는 병렬로 같은 패턴의 연산을 반복하는 수십 개의 Streaming Multiprocessor(SM)로 구성되어 있습니다.
 각 SM 안에는 다시 수많은 연산 유닛(CUDA core)과, 이 유닛들이 함께 사용하는 작은 on-chip 메모리(SRAM)가 붙어 있습니다.
@@ -239,7 +239,7 @@ SRAM의 메모리 용량은 Nvidia RTX A100 기준으로 192KB의 메모리를 �
 3. 이 가중치 행렬과 **V**를 다시 곱해서 최종 출력을 만듭니다.
 
 ![Standard Attention](./images/3.5.standard_attention.png)
-*<p style="text-align:center;">Figure 8. Standard Attention</p>*
+*<center>Figure 8. Standard Attention</center>*
 
 수식으로 쓰면 간단하지만, 실제 GPU에서는 문제가 생깁니다.
 길이가 N인 시퀀스에 대해 Attention을 하면 N×N짜리 거대한 행렬을 통째로 메모리에 만들어야 하고, 이를 여러 번 읽고 쓰면서 softmax와 matmul(행렬곱)을 수행해야 합니다.
@@ -256,7 +256,7 @@ Tiling 최적화는 주로 이 GEMM 커널 내부에서만 일어나고, 커널 
 Flash Attention의 핵심 아이디어는 아주 단순하게 말하면 “**중간결과 N×N 행렬을 아예 만들지 말자. 조각(타일) 단위로 조금씩, 그 자리에서 바로 softmax와 **V**를 곱해 최종 연산까지 끝내고 버리자.**”입니다.
 
 ![Flash Attention](./images/3.5.flash_attention.png)
-*<p style="text-align:center;">Figure 9. Flash Attention</p>*
+*<center>Figure 9. Flash Attention</center>*
 
 구체적으로는 **Q**, **K**, **V**를 **GPU의 on-chip 메모리(shared memory, register)에 들어갈 수 있는 작은 블록 단위로 잘라서** 처리합니다.
 
