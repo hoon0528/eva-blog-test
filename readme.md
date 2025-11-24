@@ -167,12 +167,12 @@ KV Cache를 “페이지(page)” 단위로 잘게 쪼개어 관리하는 방식
 
 ### 3.3. Continuous Batching (Iteration-level Scheduling)
 
-Paged Attention이 메모리를 효율적으로 쓰는 기술이라면, **Continuous Batching**[^6][^7]은 GPU 연산 자체를 최대한 활용하기 위한 기술입니다. 일반적으로 배치 추론은 일정 시간동안 들어온 요청을 한 번에 배치로 만들고, 배치 전체를 끝까지 추론하고 나서 다음 배치를 처리합니다. 하지만 앞서 살펴봤 듯 LLM 요청은 길이가 정해져 있지 않기 떄문에 배치 안에서 가장 오래 걸리는 추론이 끝날 동안 이미 연산이 완료된 요청은 대기열에서 기다립니다. 배치 내에서 먼저 끝난 요청도, 배치에 묶여서 마지막 요청이 끝날 때까지 기다려야만 합니다. 쉽게 말해 GPU가 연산할 수 있는데 놀고 있는 상황입니다.
+Paged Attention이 메모리를 효율적으로 쓰는 기술이라면, **Continuous Batching**[^6][^7]은 GPU 연산 자체를 최대한 활용하기 위한 기술입니다. 일반적으로 배치 추론은 일정 시간동안 들어온 요청을 한 번에 배치로 만들고, 배치 전체를 끝까지 추론하고 나서 다음 배치를 처리합니다. 하지만 앞서 살펴봤 듯 LLM 요청은 길이가 정해져 있지 않기 때문에 배치 안에서 가장 오래 걸리는 추론이 끝날 동안 이미 연산이 완료된 요청은 대기열에서 기다립니다. 배치 내에서 먼저 끝난 요청도, 배치에 묶여서 마지막 요청이 끝날 때까지 기다려야만 합니다. 쉽게 말해 GPU가 연산할 수 있는데 놀고 있는 상황입니다.
 
 ![Static Batching](./images/3.3.static_batching.png)
 *<p align="center">Figure 4. Static Batching</p>*
 
-**Continuous Batching(Iteration-level Scheduling)**[^6][^7]은 이걸 토큰 생성 “한 번(iteration)” 단위로 더 잘게 쪼개서 생각합니다. 한 번의 iteration이 끝날 떄 마다 이미 처리가 끝난 요청은 배치에서 바로 제거하고 새로 들어온 요청을 바로 현재 배치에 편성합니다. 즉 배치를 한 번 만들고 끝까지 고정하는 것이 아닌 매 iteration마다 업데이트하는 연속적인 구조로 변경하는거죠.
+**Continuous Batching(Iteration-level Scheduling)**[^6][^7]은 이걸 토큰 생성 “한 번(iteration)” 단위로 더 잘게 쪼개서 생각합니다. 한 번의 iteration이 끝날 때 마다 이미 처리가 끝난 요청은 배치에서 바로 제거하고 새로 들어온 요청을 바로 현재 배치에 편성합니다. 즉 배치를 한 번 만들고 끝까지 고정하는 것이 아닌 매 iteration마다 업데이트하는 연속적인 구조로 변경하는거죠.
 
 ![Continuous Batching](./images/3.3.continusous_batching.png)
 *<p align="center">Figure 5. Continuous Batching</p>*
