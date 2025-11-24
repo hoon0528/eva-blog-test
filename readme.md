@@ -306,12 +306,12 @@ AWS에서 제공하는 EC2 GPU 인스턴스인 Nvidia L40s 1장 서버 기준의
   - GPU 몇 장으로 vLLM을 서비스할 지 결정하는 값입니다.
   - EVA는 GPU 1장의 서버에서도 100대의 카메라를 서빙할 수 있어 기본 스펙은 40GB 이상의 메모리 GPU 1장으로 가정합니다.
 - `--max-model-len 12K`
-  - 하나의 요청이 사용할 수 있는 **최대 토큰(Input + Output) 길이(context length)**입니다.
+  - 하나의 요청이 사용할 수 있는 최대 토큰(Input + Output) 길이(context length)입니다.
   - EVA는 여러 장의 이미지를 통해 상황을 판단하는 경우도 있어 12K 정도를 할당했습니다.
   - 값을 작게 설정할 경우 vLLM 서버에서 에러를 발생시키고 크게 설정할 경우 최소 KV Cache 사용량이 증가합니다.
 - `--max-num-batched-tokens 4K`
   - 한 iteration에서 동시에 처리할 수 있는 토큰 총량의 상한입니다.
-    - Continuous Batching + Chunked Prefill 스케줄러가 매 스텝마다 쓸 수 있는 **“토큰 예산(token budget)”**으로 생각할 수 있습니다.
+    - Continuous Batching + Chunked Prefill 스케줄러가 매 스텝마다 쓸 수 있는 “**토큰 예산(token budget)**”으로 생각할 수 있습니다.
   - EVA는 짧은 채팅 위주의 요청과 여러장의 이미지를 처리하는 시나리오가 섞여 있어 기본 값 2K보다 높게 설정했습니다.
     - 토큰 예산을 너무 작게 잡으면 prefill이 잘게 쪼개져 전체 처리량 감소합니다.
     - 너무 크게 잡으면 길고 무거운 요청이 한 iteration을 거의 독점해 다른 이벤트의 체감 지연이 길어집니다.
@@ -330,9 +330,9 @@ AWS에서 제공하는 EC2 GPU 인스턴스인 Nvidia L40s 1장 서버 기준의
   - v1 엔진 기준으로는 chunked prefill 기본 활성화 되어 있지만, 명시적으로 설정했습니다.
     - 버전 별 동작이 달라 release note/문서를 확인하고 설정해야 합니다.
 - `--enable-prefix-caching`
-  - **Automatic Prefix Caching(APC)**를 켜는 옵션입니다.
+  - Automatic Prefix Caching(APC)를 켜는 옵션입니다.
   - 동일한 prefix(예: 시스템 프롬프트·시나리오 설명)를 공유하는 여러 요청이 들어올 때, 앞부분 KV Cache를 재사용해서 prefill 비용을 줄입니다.
-  - EVA는 여러 가지 시나리오마다 정해진 시스템 프롬프트를 공유해 prefix caching과 아주 잘 맞는 옵션입니다.
+  - EVA는 여러 가지 시나리오마다 정해진 시스템 프롬프트를 공유해 prefix caching은 아주 잘 맞는 옵션입니다.
 
 ## 5. 마치며
 
